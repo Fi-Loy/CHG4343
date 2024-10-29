@@ -1,8 +1,11 @@
-package simulation;
+package simulation.reaction;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import simulation.components.ReactorComponent;
+import simulation.ratelaw.ReactionRateLaw;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -19,30 +22,33 @@ public class Reaction {
     }
 
     public String prettyPrint() {
-        // Add context for the reaction equation
         StringBuilder output = new StringBuilder("Reaction Details:\n");
 
-        // Format reactants
         String reactantsString = reactants.stream()
                 .map(this::formatComponent)
                 .collect(Collectors.joining(" + "));
 
-        // Format products
         String productsString = products.stream()
                 .map(this::formatComponent)
                 .collect(Collectors.joining(" + "));
 
-        // Combine to form the full reaction string
         output.append("Reaction: ").append(reactantsString).append(" -> ").append(productsString).append("\n");
 
-        // Add the rate law pretty print
         output.append("\nRate Law:\n").append(rateLaw.prettyPrint());
 
         return output.toString();
     }
 
+    public List<ReactorComponent> getAllComponents() {
+        List<ReactorComponent> allComponents = new ArrayList<>();
+        allComponents.addAll(reactants);
+        allComponents.addAll(products);
+        return allComponents;
+    }
+
+
     private String formatComponent(ReactorComponent rc) {
-        // Include stoichiometry if it's not 1
         return (rc.getStoichiometry() != 1 ? rc.getStoichiometry() + " " : "") + rc.getComponent().getName();
     }
+
 }

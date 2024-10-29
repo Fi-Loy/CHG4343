@@ -1,15 +1,14 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import simulation.Component;
-import simulation.PowerRateLaw;
-import simulation.RateLawFactory;
-import simulation.Reaction;
-import simulation.ReactorComponent;
+import simulation.reaction.Reaction;
+import simulation.reaction.ReactionFactory;
+import simulation.components.ReactorComponent;
+import simulation.reactors.PackedBedReactor;
+import simulation.reactors.Reactor;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
@@ -19,37 +18,55 @@ public class Main {
             InputStream inputStream = Main.class.getClassLoader().getResourceAsStream("irreversible_powerlaw.json");
             JsonNode rootNode = objectMapper.readTree(inputStream);
 
-            JsonNode componentsJson = rootNode.get("components");
-            Map<String, Component> components = objectMapper.convertValue(componentsJson,
-                    objectMapper.getTypeFactory().constructMapType(Map.class, String.class, Component.class));
+            // Create reaction using ReactionFactory
+            Reaction reaction = ReactionFactory.createReaction(rootNode);
 
-            List<ReactorComponent> reactants = new ArrayList<>();
-            JsonNode reactantsJson = rootNode.get("reaction").get("reactants");
-            for (JsonNode reactantNode : reactantsJson) {
-                String name = reactantNode.get("name").asText();
-                double stoichiometry = reactantNode.get("stoichiometry").asDouble();
-                double initialConcentration = rootNode.get("reactorConditions").get("feedConcentrations").get(name).asDouble();
-                reactants.add(new ReactorComponent(components.get(name), stoichiometry, initialConcentration));
-            }
+            // Get reactor conditions
+// Get reactor conditions
+            JsonNode reactorConditions = rootNode.get("reactorConditions");
+            double W0 = reactorConditions.get("W0").asDouble();
+            double Wf = reactorConditions.get("Wf").asDouble();
+            double h = reactorConditions.get("h").asDouble();
+            double T0 = reactorConditions.get("temperature").asDouble();
+            double P0 = reactorConditions.get("pressure").asDouble();
+            double deltaHr = reactorConditions.get("deltaHr").asDouble();
+            double Cp = reactorConditions.get("Cp").asDouble();
+            double alpha = reactorConditions.get("alpha").asDouble();
+            double v0 = reactorConditions.get("v0").asDouble(); // Volumetric flow rate
 
-            List<ReactorComponent> products = new ArrayList<>();
-            JsonNode productsJson = rootNode.get("reaction").get("products");
-            for (JsonNode productNode : productsJson) {
-                String name = productNode.get("name").asText();
-                double stoichiometry = productNode.get("stoichiometry").asDouble();
-                double initialConcentration = rootNode.get("reactorConditions").get("feedConcentrations").get(name).asDouble();
-                products.add(new ReactorComponent(components.get(name), stoichiometry, initialConcentration));
-            }
+// Calculate total molar flow rate F_T0
+            double R = 8.314; // J/(mol·K)
+            double F_T0 = (P0 * v0) / (R * T0);
 
-            JsonNode reactionJson = rootNode.get("reaction");
-            PowerRateLaw rateLaw = (PowerRateLaw) RateLawFactory.createRateLaw(reactionJson);
+// Collect all components
+            List<ReactorComponent> components = new ArrayList<>();
+            components.addAll(reaction.getReactants());
+            components.addAll(reaction.getProducts());
 
-            Reaction reaction = new Reaction(reactants, products, rateLaw);
+// Create reactor
+            Reactor reactor = new PackedBedReactor(
+                    reaction,
+                    components,
+                    W0,
+                    Wf,
+                    h,
+                    T0,
+                    P0,
+                    F_T0,
+                    v0,
+                    deltaHr,
+                    Cp,
+                    alpha
+            );
+            System.out.println(reactor.prettyPrint());
 
-            System.out.println(reaction.prettyPrint());
 
-            double reactionRate = reaction.calculateReactionRate();
-            System.out.println("\nCalculated Reaction Rate: " + reactionRate);
+            // Initialize and run simulation
+            reactor.initialize();
+            reactor.runSimulation();
+
+            // Print results
+            reactor.printResults();
 
         } catch (Exception e) {
             e.printStackTrace();

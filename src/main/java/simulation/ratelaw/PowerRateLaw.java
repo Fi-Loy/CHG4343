@@ -1,7 +1,8 @@
-package simulation;
+package simulation.ratelaw;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import simulation.components.ReactorComponent;
 
 import java.util.List;
 import java.util.Map;
@@ -29,10 +30,8 @@ public class PowerRateLaw implements ReactionRateLaw {
     public String prettyPrint() {
         StringBuilder output = new StringBuilder();
 
-        // Header with rate law type
         output.append("Rate Law Type: Power Law\n");
 
-        // Rate law equation in the form: -ra = k * [A]^order * [B]^order ...
         output.append("-ra = ").append(rateConstant);
         StringJoiner joiner = new StringJoiner(" * ");
         for (Map.Entry<String, Double> entry : reactantOrders.entrySet()) {
@@ -42,7 +41,6 @@ public class PowerRateLaw implements ReactionRateLaw {
         }
         output.append(" * ").append(joiner).append("\n");
 
-        // Table of reactants and orders
         output.append("\nReactant Orders Table:\n");
         output.append(String.format("%-10s | %-10s\n", "Reactant", "Order"));
         output.append("-----------|------------\n");

@@ -1,4 +1,6 @@
-package simulation;
+package simulation.ratelaw;
+
+import simulation.components.ReactorComponent;
 
 import java.util.List;
 import java.util.Optional;

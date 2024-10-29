@@ -1,4 +1,4 @@
-package simulation;
+package simulation.components;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

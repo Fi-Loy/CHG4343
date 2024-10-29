@@ -1,4 +1,4 @@
-package simulation;
+package simulation.components;
 
 import lombok.Data;
 
@@ -8,13 +8,12 @@ public class ReactorComponent {
     private double stoichiometry;
     private final double initialConcentration;
     private double concentration;
+    private double temperature;
 
-    public ReactorComponent(Component component, double stoichiometry, double initialConcentration){
+    public ReactorComponent(Component component, double stoichiometry, double initialConcentration) {
         this.component = component;
         this.stoichiometry = stoichiometry;
         this.initialConcentration = initialConcentration;
         this.concentration = initialConcentration;
     }
 }
-
-
