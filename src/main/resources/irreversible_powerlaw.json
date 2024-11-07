@@ -40,7 +40,7 @@
   },
   "reactor": {
     "type": "packed-bed",
-    "mode": "isothermal",
+    "mode": "adiabatic",
     "alpha": 0.1,
     "Wf": 2
   },

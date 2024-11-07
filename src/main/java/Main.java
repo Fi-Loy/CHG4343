@@ -9,9 +9,16 @@ import simulation.reaction.Reaction;
 import simulation.reaction.ReactionFactory;
 import simulation.reactors.Reactor;
 import simulation.reactors.ReactorFactory;
+import tech.tablesaw.api.ColumnType;
+import tech.tablesaw.api.DoubleColumn;
+import tech.tablesaw.api.Table;
+import tech.tablesaw.columns.numbers.NumberColumnFormatter;
 
 import java.io.InputStream;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.List;
+import java.util.Locale;
 
 public class Main {
     public static void main(String[] args) {
@@ -29,7 +36,13 @@ public class Main {
             reactor.summarize();
 
             ODESolver solver = new RK4Solver();
-            solver.solve((ODESystem) reactor, reactor.getInitialReactorState().toArray(), 0.0, reactor.getIndependentVariable(), 0.05);
+            double[][] results = solver.solve((ODESystem) reactor, reactor.getInitialReactorState().toArray(), 0.0, reactor.getIndependentVariable(), 0.05);
+            Table resultTable = reactor.processResults(results);
+            reactor.plotResults(resultTable);
+            resultTable.write().csv("src/main/resources/testoutput.csv");
+
+            System.out.println(resultTable.print());
+
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -7,13 +7,16 @@ import java.util.List;
 public class RK4Solver implements ODESolver{
 
     @Override
-    public List<double[]> solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
-        List<double[]> results = new ArrayList<>();
+    public double[][] solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
+        int steps = (int) Math.ceil((xEnd - x0) / h) + 1;
+        double[][] results = new double[steps][y0.length];
+
         double x = x0;
         double[] y = y0.clone();
-        results.add(y.clone());
+        results[0] = y.clone();
 
-        while (x < xEnd) {
+        int step = 1;
+        while (x < xEnd && step < steps) {
             double[] k1 = multiplyArray(system.computeDerivatives(x, y), h);
             double[] yTemp = addArrays(y, multiplyArray(k1, 0.5));
 
@@ -30,8 +33,9 @@ public class RK4Solver implements ODESolver{
             }
 
             x += h;
-            results.add(y.clone());
-            System.out.println(Arrays.toString(y.clone()));
+            results[step] = y.clone();
+
+            step++;
         }
 
         return results;

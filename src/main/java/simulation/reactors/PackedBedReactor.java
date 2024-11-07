@@ -1,25 +1,29 @@
 package simulation.reactors;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import tech.tablesaw.plotly.Plot;
+import tech.tablesaw.plotly.api.LinePlot;
+import tech.tablesaw.plotly.api.ScatterPlot;
 import lombok.Getter;
 import simulation.components.Species;
-import simulation.odesolver.EulerSolver;
-import simulation.odesolver.ODESolver;
-import simulation.odesolver.RK4Solver;
+import tech.tablesaw.api.DoubleColumn;
+import tech.tablesaw.api.Table;
 import simulation.reaction.Reaction;
+import tech.tablesaw.plotly.components.Axis;
+import tech.tablesaw.plotly.components.Figure;
+import tech.tablesaw.plotly.components.Layout;
+import tech.tablesaw.plotly.components.Marker;
+import tech.tablesaw.plotly.traces.ScatterTrace;
 
 import java.util.*;
 @Getter
 public class PackedBedReactor extends Reactor {
     private final double alpha;
-    private final String mode; //"adiabatic" or "isothermal"
     private final Map<String, Integer> speciesIndexMap;
 
     public PackedBedReactor(Reaction reaction, List<Species> speciesList, double Wf, double alpha, String mode) {
-        super(reaction, speciesList, Wf);
+        super(reaction, speciesList, Wf, mode);
         this.alpha = alpha;
-        this.mode = mode;
-        this.reactorState = null;
         this.initialReactorState = null;
 
         this.speciesIndexMap = new HashMap<>();
@@ -59,12 +63,8 @@ public class PackedBedReactor extends Reactor {
         for (Map.Entry<String, Double> flow : molarFlows.entrySet()){
             concentrations.put(flow.getKey(), flow.getValue()/V);
         }
-//        molarFlows.put("T", totalMolarFlow); //total flow
 
-        this.reactorState = new ReactorState(T, P, 1, V, molarFlows, concentrations);
-        this.initialReactorState = this.reactorState.clone();
-        System.out.println(java.util.Arrays.toString(this.initialReactorState.toArray()));
-
+        this.initialReactorState= new ReactorState(T, P, 1, V, molarFlows, concentrations);
     }
 
 
@@ -94,7 +94,6 @@ public class PackedBedReactor extends Reactor {
         }
 
         ReactorState currentState = new ReactorState(temperature, pressure, specificPressure, volume, molarFlows, concentrations);
-        this.reactorState = currentState;
 
         double[] dydW = new double[y.length];
         Arrays.fill(dydW, 0.0);
@@ -126,17 +125,146 @@ public class PackedBedReactor extends Reactor {
                 totalCp += molarFlow * speciesCp;
             }
         }
-        dydW[0] = (reactionRate * reaction.getHeat()) / totalCp;
+
+        double dTdW = 0;
+        if (mode == ReactorModes.ADIABATIC){
+            dTdW = (reactionRate * reaction.getHeat()) / totalCp;
+        }
+        dydW[0] = dTdW;
 
         return dydW;
     }
 
-    public void test(){
-        var arr = this.initialReactorState.toArray();
-        ODESolver solver = new EulerSolver();
-        solver.solve(this, arr, 0, 2, 0.05);
+    public Table processResults(double[][] results) {
+        double R = 0.08206;
+        double initialPressure = this.initialReactorState.getPressure();
+
+        List<String> columnNames = new ArrayList<>(List.of("Catalyst Weight", "T", "sp", "P", "V"));
+
+        for (Species species : speciesList) {
+            columnNames.add("F_" + species.getName());
+        }
+        for (Species species : speciesList) {
+            columnNames.add("C_" + species.getName());
+        }
+
+        Table resultTable = Table.create("Packed Bed Reactor Results");
+        for (String columnName : columnNames) {
+            resultTable.addColumns(DoubleColumn.create(columnName));
+        }
+
+        int numSteps = results.length;
+        double deltaW = this.independentVariable / (numSteps - 1);
+        double catalystWeight = 0;
+
+        for (double[] row : results) {
+
+            List<Double> rowData = new ArrayList<>();
+            rowData.add(catalystWeight);
+
+            double temperature = row[0];
+            double specificPressure = row[1];
+            rowData.add(temperature);
+            rowData.add(specificPressure);
+
+            double pressure = specificPressure * initialPressure;
+            rowData.add(pressure);
+
+            double totalMolarFlow = Arrays.stream(row, 2, row.length).sum();
+            double volume = (totalMolarFlow * R * temperature) / pressure;
+            rowData.add(volume);
+
+            for (int i = 2; i < row.length; i++) {
+                rowData.add(row[i]);
+            }
+
+            for (int i = 2; i < row.length; i++) {
+                double concentration = row[i] / volume;
+                rowData.add(concentration);
+            }
+
+            for (int i = 0; i < rowData.size(); i++) {
+                resultTable.doubleColumn(i).append(rowData.get(i));
+            }
+
+            catalystWeight += deltaW;
+        }
+
+        return resultTable;
     }
 
+
+    public void plotResults(Table table) {
+        var x = table.nCol("Catalyst Weight");
+
+        var concentrationColumn = Table.create("Concentration Table");
+        for(var colName : table.columnNames()){
+            if(!colName.startsWith("C_")){
+                continue;
+            }
+            concentrationColumn.addColumns(table.nCol(colName));
+        }
+
+        var concentrationTraces = new ScatterTrace[concentrationColumn.columnCount()];
+        for(int i = 0;  i < concentrationColumn.columnCount(); i++){
+            concentrationTraces[i] = (ScatterTrace.builder(x, concentrationColumn.nCol(i)).mode(ScatterTrace.Mode.LINE).name(concentrationColumn.nCol(i).name()).build());
+        }
+
+        Layout concentrationLayout =
+                Layout.builder().title("Specie Concentrations Versus Catalyst Weight in Packed Bed Reactor").build();
+        Plot.show(new Figure(concentrationLayout, concentrationTraces));
+
+        var flowColumn = Table.create("Concentration Table");
+        for(var colName : table.columnNames()){
+            if(!colName.startsWith("F_")){
+                continue;
+            }
+            flowColumn.addColumns(table.nCol(colName));
+        }
+
+        var traces = new ScatterTrace[flowColumn.columnCount()];
+        for(int i = 0;  i < flowColumn.columnCount(); i++){
+            traces[i] = (ScatterTrace.builder(x, flowColumn.nCol(i)).mode(ScatterTrace.Mode.LINE).name(flowColumn.nCol(i).name()).build());
+        }
+
+        Layout flowLayout =
+                Layout.builder().title("Specie Flows Versus Catalyst Weight in Packed Bed Reactor").build();
+        Plot.show(new Figure(flowLayout, traces));
+
+        var y = table.nCol("T");
+        var y2 = table.nCol("P");
+
+        Layout layout =
+                Layout.builder()
+                        .title("Temperature and Pressure versus Catalyst Weight in a Packed Bed Reactor")
+                        .xAxis(Axis.builder().title("Catalyst Weight").build())
+                        .yAxis(Axis.builder().title("Temperature [K]").build())
+                        .yAxis2(
+                                Axis.builder()
+                                        .title("Pressure [atm]")
+                                        .side(Axis.Side.right)
+                                        .overlaying(ScatterTrace.YAxis.Y)
+                                        .build())
+                        .build();
+
+        ScatterTrace trace =
+                ScatterTrace.builder(x, y)
+                        .name("Temperature [K]")
+                        .marker(Marker.builder().opacity(.7).color("#9A0EEA").build())
+                        .mode(ScatterTrace.Mode.LINE)
+                        .build();
+
+        ScatterTrace trace2 =
+                ScatterTrace.builder(x, y2)
+                        .yAxis(ScatterTrace.YAxis.Y2)
+                        .name("Pressure [atm]")
+                        .marker(Marker.builder().opacity(.7).color("#008080").build())
+                        .mode(ScatterTrace.Mode.LINE)
+                        .build();
+
+        Figure figure = new Figure(layout, trace2, trace);
+        Plot.show(figure);
+    }
 
 
     @Override
@@ -145,7 +273,7 @@ public class PackedBedReactor extends Reactor {
 
         output.append("Packed Bed Reactor Summary\n");
         output.append("--------------------------\n");
-        output.append(String.format("Mode: %-10s\n", mode));
+        output.append(String.format("Mode: %-10s\n", this.mode));
         output.append(String.format("Alpha: %-10.4f\n", alpha));
         output.append(String.format("Final Weight (Wf): %-10.2f\n\n", independentVariable));
 
