@@ -1,67 +1,58 @@
 {
-  "reaction": {
-    "reactionType": "power-law",
-    "isReversible": false,
-    "reactants": [
-      {
-        "name": "A",
-        "stoichiometry": -1,
-        "order": 1.0
-      },
-      {
-        "name": "B",
-        "stoichiometry": -1,
-        "order": 1.0
-      }
-    ],
-    "products": [
-      {
-        "name": "C",
-        "stoichiometry": 2
-      }
-    ],
-    "rateConstants": {
-      "kAtT0": 10.0,
-      "E": 31400,
-      "T0": 450
-    }
-
-  },
-  "reactorConditions": {
-    "W0": 0.0,
-    "Wf": 100.0,
-    "h": 1.0,
-    "pressure": 1013250,
-    "temperature": 450,
-    "deltaHr": -20000,
-    "Cp": null,
-    "alpha": 0.01,
-    "v0": 0.02,
-    "feedMoleFractions": {
-      "A": 0.6,
-      "B": 0.4,
-      "C": 0.0
-    },
-    "rho_c": 1000
-  },
-  "components": {
-    "A": {
+  "species": [
+    {
       "name": "A",
-      "cp": 40.0,
-      "h": 0.0,
-      "molecularWeight": 18.0
+      "cp": 40.0
     },
-    "B": {
+    {
       "name": "B",
-      "cp": 15.0,
-      "h": 0.0,
-      "molecularWeight": 17.0
+      "cp": 15.0
     },
-    "C": {
+    {
       "name": "C",
-      "cp": 15.0,
-      "h": 0.0,
-      "molecularWeight": 20.0
+      "cp": 15.0
+    },
+    {
+      "name": "I",
+      "cp": 10.0
+    }
+  ],
+  "reaction": {
+    "type": "power-law",
+    "isReversible": false,
+    "heat" : 20000,
+    "stoichiometry": {
+      "A": -2,
+      "B": 1,
+      "C": 2
+    },
+    "rateLaw": {
+      "type": "arrhenius",
+      "parameters": {
+        "k0": 10.0,
+        "E": 31400,
+        "T0": 450
+      },
+      "orders": {
+        "A": 2.0
+      }
+    }
+  },
+  "reactor": {
+    "type": "packed-bed",
+    "mode": "isothermal",
+    "alpha": 0.1,
+    "Wf": 2
+  },
+  "feed": {
+    "T": 450,
+    "P": 10,
+    "V": 20,
+    "composition": {
+      "A": 0.6,
+      "B" : 0,
+      "C" : 0,
+      "I": 0.4
     }
   }
 }

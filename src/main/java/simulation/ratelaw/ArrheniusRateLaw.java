@@ -1,53 +1,54 @@
 package simulation.ratelaw;
 
-import simulation.components.ReactorComponent;
+import simulation.components.Species;
+import simulation.reactors.ReactorState;
+import util.Summarizes;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.StringJoiner;
 
-public class ArrheniusRateLaw implements ReactionRateLaw {
-    private final double k0; // Pre-exponential factor
-    private final double E;  // Activation energy in J/mol
-    private final Map<String, Double> reactantOrders;
+public class ArrheniusRateLaw extends RateLaw {
+    private final double k0;
+    private final double E;
+    private final double T0;
+    private final Map<String, Double> orders;
 
-    public ArrheniusRateLaw(double k0, double E, Map<String, Double> reactantOrders) {
+    public ArrheniusRateLaw(double k0, double E, double T0, Map<String, Double> orders) {
         this.k0 = k0;
         this.E = E;
-        this.reactantOrders = reactantOrders;
+        this.T0 = T0;
+        this.orders = orders;
     }
 
-    @Override
-    public double calculateRate(List<ReactorComponent> reactantConcentrations,
-                                Optional<List<ReactorComponent>> productConcentrations) {
-        // Assume temperature is the same for all components
-        double T = reactantConcentrations.get(0).getTemperature();
 
-        // Calculate rate constant at current temperature
+    @Override
+    public double calculateRate(ReactorState state) {
         double R = 8.314; // J/(mol·K)
-        double k = k0 * Math.exp(-E / (R * T));
+        double temperature = state.getTemperature();
+        double rate = k0 * Math.exp((E / R) * (1 / T0 - 1 / temperature));
 
-        double rate = k;
-        for (ReactorComponent reactant : reactantConcentrations) {
-            String name = reactant.getComponent().getName();
-            double order = reactantOrders.getOrDefault(name, 0.0);
-            rate *= Math.pow(reactant.getConcentration(), order);
+        for (String speciesName : orders.keySet()) {
+            if (orders.containsKey(speciesName)) {
+                Double order = orders.get(speciesName);
+                double concentration = state.getConcentrations().get(speciesName);
+                rate *= Math.pow(concentration, order);
+            }
         }
-        return rate;
+        return -rate;
     }
 
-
-    @Override
-    public String prettyPrint() {
+    public void summarize() {
         StringBuilder output = new StringBuilder();
+        output.append("Rate Law Summary\n");
+        output.append("----------------\n");
 
         output.append("Rate Law Type: Arrhenius Power Law\n");
-
         output.append("Rate Law Equation:\n");
         output.append("-ra = k(T) ");
+
         StringJoiner joiner = new StringJoiner(" * ");
-        for (Map.Entry<String, Double> entry : reactantOrders.entrySet()) {
+        for (Map.Entry<String, Double> entry : orders.entrySet()) {
             String reactant = entry.getKey();
             double order = entry.getValue();
             joiner.add("[" + reactant + "]^" + order);
@@ -55,26 +56,20 @@ public class ArrheniusRateLaw implements ReactionRateLaw {
         output.append("* ").append(joiner).append("\n");
 
         output.append("\nWhere:\n");
-        output.append("k(T) = k₀ * exp(-E / (R * T))\n");
-        output.append(String.format("k₀ = %.4e m^3/(mol-s)\n", k0));
+        output.append("k(T) = k0 * exp((E / R) * (1 / T0 - 1 / T))\n");
+        output.append(String.format("k0 = %.4e m^3/(mol-s)\n", k0));
         output.append(String.format("E  = %.2f J/mol\n", E));
-        output.append("R  = 8.314 J/(mol·K)\n");
+        output.append("R  = 8.314 J/(mol-K)\n");
+        output.append(String.format("T0 = %.2f K\n", T0));
 
-        double T0 = 450.0;
-        double R = 8.314;
-        double kAtT0 = k0 * Math.exp(-E / (R * T0));
-        output.append(String.format("At T0 = %.2f K, k(T0) = %.4e m^3/(mol-s)\n", T0, kAtT0));
+//        output.append("\nReactant Orders:\n");
+//        output.append(String.format("%-10s | %-10s\n", "Reactant", "Order"));
+//        output.append("-----------|------------\n");
+//        for (Map.Entry<String, Double> entry :orders.entrySet()) {
+//            output.append(String.format("%-10s | %-10.2f\n", entry.getKey(), entry.getValue()));
+//        }
 
-        output.append("\nReactant Orders:\n");
-        output.append(String.format("%-10s | %-10s\n", "Reactant", "Order"));
-        output.append("-----------|------------\n");
-        for (Map.Entry<String, Double> entry : reactantOrders.entrySet()) {
-            output.append(String.format("%-10s | %-10.2f\n", entry.getKey(), entry.getValue()));
-        }
-
-        return output.toString();
+        System.out.println(output.toString());
     }
-
-
 }
 

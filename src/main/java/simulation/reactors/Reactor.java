@@ -1,14 +1,32 @@
 package simulation.reactors;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Data;
+import simulation.components.Species;
+import simulation.odesolver.ODESystem;
+import simulation.reaction.Reaction;
+import util.Summarizes;
+
 import java.util.List;
+import java.util.Map;
 
-public interface Reactor {
-    void initialize();
-    void runSimulation();
+@Data
+public abstract class Reactor implements ODESystem, Summarizes {
+    protected Reaction reaction;
+    protected ReactorState reactorState;
+    protected ReactorState initialReactorState;
+    protected double independentVariable;
 
-    String prettyPrint();
+    protected List<Species> speciesList;
+    public Reactor(Reaction reaction, List<Species> speciesList, double independentVariable) {
+        this.reaction = reaction;
+        this.speciesList = speciesList;
+        this.independentVariable = independentVariable;
+    }
 
-    void printResults();
+    public abstract void initialize(JsonNode feedNode);
+    public abstract void summarize();
 
-    List<double[]> getResults();
+    public abstract double[] computeDerivatives(double x, double[] y);
+
 }

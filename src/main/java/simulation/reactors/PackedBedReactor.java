@@ -1,149 +1,158 @@
 package simulation.reactors;
 
-import simulation.reaction.Reaction;
-import simulation.components.ReactorComponent;
-import simulation.odesolver.ODESystem;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.Getter;
+import simulation.components.Species;
+import simulation.odesolver.EulerSolver;
+import simulation.odesolver.ODESolver;
 import simulation.odesolver.RK4Solver;
+import simulation.reaction.Reaction;
 
-import java.util.List;
-import java.util.Optional;
-
-public class PackedBedReactor implements Reactor, ODESystem {
-
-    private final Reaction reaction;
-    private final List<ReactorComponent> components;
-    private final double W0;
-    private final double Wf;
-    private final double h;
-    private final double T0;
-    private final double F_T0;
-    private final double P0;
-    private final double v0;
-    private final double deltaHr;
-    private final double Cp;
+import java.util.*;
+@Getter
+public class PackedBedReactor extends Reactor {
     private final double alpha;
-    private List<double[]> simulationData;
+    private final String mode; //"adiabatic" or "isothermal"
+    private final Map<String, Integer> speciesIndexMap;
 
-    public PackedBedReactor(Reaction reaction, List<ReactorComponent> components,
-                            double W0, double Wf, double h,
-                            double T0, double P0, double F_T0, double v0,
-                            double deltaHr, double Cp, double alpha) {
-        this.reaction = reaction;
-        this.components = components;
-        this.W0 = W0;
-        this.Wf = Wf;
-        this.h = h;
-        this.T0 = T0;
-        this.deltaHr = deltaHr;
-        this.Cp = Cp;
+    public PackedBedReactor(Reaction reaction, List<Species> speciesList, double Wf, double alpha, String mode) {
+        super(reaction, speciesList, Wf);
         this.alpha = alpha;
-        this.F_T0 = F_T0;
-        this.P0 = P0;
-        this.v0 = v0;
-    }
+        this.mode = mode;
+        this.reactorState = null;
+        this.initialReactorState = null;
 
-    @Override
-    public void initialize() {
-
-    }
-
-    @Override
-    public void runSimulation() {
-        double[] y0 = getInitialState();
-        simulationData = RK4Solver.solve(this, y0, W0, Wf, h);
-    }
-
-    @Override
-    public void printResults() {
-        for (double[] state : simulationData) {
-            System.out.println("F_A: " + state[0] + ", T: " + state[components.size()] + ", p: " + state[components.size() + 1]);
+        this.speciesIndexMap = new HashMap<>();
+        int index = 2;
+        for (Species species : speciesList) {
+            this.speciesIndexMap.put(species.getName(), index++);
         }
     }
 
     @Override
-    public List<double[]> getResults() {
-        return simulationData;
+    public void initialize(JsonNode feedNode) {
+        double R = 0.08206;
+        double T = feedNode.get("T").asDouble();
+        double P = feedNode.get("P").asDouble();
+        double V = feedNode.get("V").asDouble();
+        double p = 1;
+
+        JsonNode compNode = feedNode.get("composition");
+
+        Map<String, Double> molarFlows = new HashMap<>();
+
+        double totalMolarRatio = 0.0;
+        Iterator<String> fieldNames = compNode.fieldNames();
+        while (fieldNames.hasNext()) {
+            String name = fieldNames.next();
+            double ratio = compNode.get(name).asDouble();
+            double molarFlow = ratio * ((P * V) / (T * R));
+            molarFlows.put(name, molarFlow);
+            totalMolarRatio += ratio;
+        }
+
+        if(Double.compare(1.0, totalMolarRatio) != 0){
+            throw new IllegalArgumentException("Molar Ratios should add up to 0");
+        }
+
+        Map<String, Double> concentrations = new HashMap<>();
+        for (Map.Entry<String, Double> flow : molarFlows.entrySet()){
+            concentrations.put(flow.getKey(), flow.getValue()/V);
+        }
+//        molarFlows.put("T", totalMolarFlow); //total flow
+
+        this.reactorState = new ReactorState(T, P, 1, V, molarFlows, concentrations);
+        this.initialReactorState = this.reactorState.clone();
+        System.out.println(java.util.Arrays.toString(this.initialReactorState.toArray()));
+
     }
 
+
     @Override
-    public double[] computeDerivatives(double W, double[] y) {
-        int nComp = components.size();
-        double[] F = new double[nComp];
-        for (int i = 0; i < nComp; i++) {
-            F[i] = y[i];
-        }
-        double T = y[nComp];
-        double p = y[nComp + 1];
+    public double[] computeDerivatives(double x, double[] y) {
+        double R = 0.08206;
 
-        // Total molar flow rate
-        double F_T = 0;
-        for (double Fi : F) {
-            F_T += Fi;
-        }
+        double temperature = y[0];
+        double specificPressure = y[1];
+        double initialPressure = this.initialReactorState.getPressure();
+        double pressure = specificPressure * initialPressure;
 
-        double[] C = new double[nComp];
-        for (int i = 0; i < nComp; i++) {
-            C[i] = (F[i] / F_T) * (p / (8.314 * T));
-            components.get(i).setConcentration(C[i]);
+        Map<String, Double> molarFlows = new HashMap<>();
+        for (Species species : speciesList) {
+            String speciesName = species.getName();
+            int speciesIndex = speciesIndexMap.get(speciesName);
+            molarFlows.put(speciesName, y[speciesIndex]);
         }
 
-        double r1 = reaction.getRateLaw().calculateRate(reaction.getReactants(), Optional.empty());
+        double totalMolarFlow = molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
 
-        double[] dFdW = new double[nComp];
-        for (int i = 0; i < nComp; i++) {
-            double stoich = components.get(i).getStoichiometry();
-            dFdW[i] = stoich * r1;
+        double volume = (totalMolarFlow * R * temperature) / pressure;
+
+        Map<String, Double> concentrations = new HashMap<>();
+        for (Map.Entry<String, Double> flow : molarFlows.entrySet()) {
+            concentrations.put(flow.getKey(), flow.getValue() / volume);
         }
 
-        double Q = 0;
-        double dTdW = (-deltaHr * r1 + Q) / (F_T * Cp);
+        ReactorState currentState = new ReactorState(temperature, pressure, specificPressure, volume, molarFlows, concentrations);
+        this.reactorState = currentState;
 
-        double dpdW = -(alpha / (2 * p)) * (F_T / F_T) * (T / T0);
+        double[] dydW = new double[y.length];
+        Arrays.fill(dydW, 0.0);
 
-        double[] dydW = new double[nComp + 2];
-        System.arraycopy(dFdW, 0, dydW, 0, nComp);
-        dydW[nComp] = dTdW;
-        dydW[nComp + 1] = dpdW;
+        double reactionRate = reaction.calculateRate(currentState);
+        String referenceSpecie = reaction.getReference();
+        int referenceStoichiometry = reaction.getStoichiometry().get(referenceSpecie);
+
+        for (Map.Entry<String, Integer> entry : reaction.getStoichiometry().entrySet()) {
+            String species = entry.getKey();
+            int stoichiometry = entry.getValue();
+
+            int speciesIndex = speciesIndexMap.get(species);
+            dydW[speciesIndex] += reactionRate * stoichiometry / referenceStoichiometry;
+        }
+
+        double initialTemperature = this.initialReactorState.getTemperature();
+        double initialTotalFlow = this.initialReactorState.getTotalMolarFlow();
+        dydW[1] = -(alpha / (2 * pressure)) * (totalMolarFlow / initialTotalFlow) * (temperature / initialTemperature);
+
+        double totalCp = 0;
+        for (Species species : speciesList) {
+            String speciesName = species.getName();
+            double speciesCp = species.getCp();
+
+            Double molarFlow = currentState.getMolarFlows().get(speciesName);
+
+            if (molarFlow != null) {
+                totalCp += molarFlow * speciesCp;
+            }
+        }
+        dydW[0] = (reactionRate * reaction.getHeat()) / totalCp;
 
         return dydW;
     }
 
-    private double[] getInitialState() {
-        int nComp = components.size();
-        double[] y0 = new double[nComp + 2];
-
-        for (int i = 0; i < nComp; i++) {
-            y0[i] = components.get(i).getInitialConcentration();
-        }
-
-        y0[nComp] = T0;
-        y0[nComp + 1] = P0;
-
-        return y0;
+    public void test(){
+        var arr = this.initialReactorState.toArray();
+        ODESolver solver = new EulerSolver();
+        solver.solve(this, arr, 0, 2, 0.05);
     }
 
-    public String prettyPrint() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Packed Bed Reactor Conditions:\n");
-        sb.append("-------------------------------\n");
-        sb.append(String.format("Initial Catalyst Weight (W0): %.2f kg\n", W0));
-        sb.append(String.format("Final Catalyst Weight (Wf): %.2f kg\n", Wf));
-        sb.append(String.format("Integration Step Size (h): %.2f kg\n", h));
-        sb.append(String.format("Initial Temperature (T0): %.2f K\n", T0));
-        sb.append(String.format("Initial Pressure (P0): %.2f Pa\n", P0));
-        sb.append(String.format("Initial Total Molar Flow Rate (F_T0): %.4e mol/s\n", F_T0));
-        sb.append(String.format("Initial Volumetric Flow Rate (v0): %.4e m³/s\n", v0));
-        sb.append(String.format("Heat of Reaction (ΔH_r): %.2f J/mol\n", deltaHr));
-        sb.append(String.format("Pressure Drop Coefficient (α): %.4e kg⁻¹\n", alpha));
-        sb.append("\nComponents:\n");
-        sb.append(String.format("%-10s | %-15s | %-15s\n", "Name", "Initial Flow Rate", "Stoichiometry"));
-        sb.append("-----------------------------------------------------\n");
-        for (ReactorComponent component : components) {
-            String name = component.getComponent().getName();
-            double flowRate = component.getInitialConcentration();
-            double stoich = component.getStoichiometry();
-            sb.append(String.format("%-10s | %-15.4e | %-15.2f\n", name, flowRate, stoich));
-        }
-        return sb.toString();
+
+
+    @Override
+    public void summarize() {
+        StringBuilder output = new StringBuilder();
+
+        output.append("Packed Bed Reactor Summary\n");
+        output.append("--------------------------\n");
+        output.append(String.format("Mode: %-10s\n", mode));
+        output.append(String.format("Alpha: %-10.4f\n", alpha));
+        output.append(String.format("Final Weight (Wf): %-10.2f\n\n", independentVariable));
+
+        output.append("Reaction Details:\n");
+        System.out.println(output.toString());
+
+        reaction.summarize();
+
     }
 }

@@ -1,11 +1,13 @@
 package simulation.odesolver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class RK4Solver {
+public class RK4Solver implements ODESolver{
 
-    public static List<double[]> solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
+    @Override
+    public List<double[]> solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
         List<double[]> results = new ArrayList<>();
         double x = x0;
         double[] y = y0.clone();
@@ -29,6 +31,7 @@ public class RK4Solver {
 
             x += h;
             results.add(y.clone());
+            System.out.println(Arrays.toString(y.clone()));
         }
 
         return results;
@@ -60,4 +63,5 @@ public class RK4Solver {
         }
         return result;
     }
+
 }
