@@ -1,7 +1,9 @@
 package simulation.odesolver;
 
+import lombok.NonNull;
+
 public interface ODESystem {
 
-    double[] computeDerivatives(double x, double[] y);
+    double[] computeDerivatives(double x, double @NonNull [] y);
 
 }

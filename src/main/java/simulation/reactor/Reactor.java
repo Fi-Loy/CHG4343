@@ -1,7 +1,8 @@
-package simulation.reactors;
+package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.NonNull;
 import simulation.components.Species;
 import simulation.odesolver.ODESystem;
 import simulation.reaction.Reaction;
@@ -17,12 +18,12 @@ enum ReactorModes {
 
 @Data
 public abstract class Reactor implements ODESystem, Summarizes {
-    protected Reaction reaction;
+    @NonNull protected Reaction reaction;
     protected ReactorState initialReactorState;
     protected double independentVariable;
-    protected ReactorModes mode;
-    protected List<Species> speciesList;
-    public Reactor(Reaction reaction, List<Species> speciesList, double independentVariable, String mode) {
+    @NonNull protected ReactorModes mode;
+    @NonNull protected List<Species> speciesList;
+    public Reactor(@NonNull Reaction reaction, @NonNull List<Species> speciesList, double independentVariable, @NonNull String mode) {
         this.reaction = reaction;
         this.speciesList = speciesList;
         this.independentVariable = independentVariable;
@@ -34,12 +35,12 @@ public abstract class Reactor implements ODESystem, Summarizes {
         }
     }
 
-    public abstract void initialize(JsonNode feedNode);
+    public abstract void initialize(@NonNull JsonNode feedNode);
     public abstract void summarize();
 
-    public abstract double[] computeDerivatives(double x, double[] y);
+    public abstract double[] computeDerivatives(double x, double @NonNull [] y);
 
-    public abstract Table processResults(double[][] results);
+    public abstract Table processResults(double @NonNull [] @NonNull [] results);
 
-    public abstract void plotResults(Table table);
+    public abstract void plotResults(@NonNull Table table);
 }

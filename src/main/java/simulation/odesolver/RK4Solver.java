@@ -1,13 +1,11 @@
 package simulation.odesolver;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import lombok.NonNull;
 
 public class RK4Solver implements ODESolver{
 
     @Override
-    public double[][] solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
+    public double[][] solve(@NonNull ODESystem system, double@NonNull [] y0, double x0, double xEnd, double h) {
         int steps = (int) Math.ceil((xEnd - x0) / h) + 1;
         double[][] results = new double[steps][y0.length];
 
@@ -41,14 +39,7 @@ public class RK4Solver implements ODESolver{
         return results;
     }
 
-    public static double[] addArrays(double[] a, double[] b) {
-        if (a == null || b == null) {
-            throw new IllegalArgumentException("Input arrays cannot be null.");
-        }
-        if (a.length != b.length) {
-            throw new IllegalArgumentException("Input arrays must have the same length.");
-        }
-
+    public static double[] addArrays(double @NonNull  [] a, double @NonNull [] b) {
         double[] result = new double[a.length];
         for (int i = 0; i < a.length; i++) {
             result[i] = a[i] + b[i];
@@ -56,11 +47,7 @@ public class RK4Solver implements ODESolver{
         return result;
     }
 
-    public static double[] multiplyArray(double[] a, double scalar) {
-        if (a == null) {
-            throw new IllegalArgumentException("Input array cannot be null.");
-        }
-
+    public static double[] multiplyArray(double @NonNull [] a, double scalar) {
         double[] result = new double[a.length];
         for (int i = 0; i < a.length; i++) {
             result[i] = a[i] * scalar;

@@ -1,9 +1,8 @@
-package simulation.reactors;
+package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.NonNull;
 import tech.tablesaw.plotly.Plot;
-import tech.tablesaw.plotly.api.LinePlot;
-import tech.tablesaw.plotly.api.ScatterPlot;
 import lombok.Getter;
 import simulation.components.Species;
 import tech.tablesaw.api.DoubleColumn;
@@ -19,7 +18,7 @@ import java.util.*;
 @Getter
 public class PackedBedReactor extends Reactor {
     private final double alpha;
-    private final Map<String, Integer> speciesIndexMap;
+    @NonNull private final Map<String, Integer> speciesIndexMap;
 
     public PackedBedReactor(Reaction reaction, List<Species> speciesList, double Wf, double alpha, String mode) {
         super(reaction, speciesList, Wf, mode);
@@ -34,7 +33,7 @@ public class PackedBedReactor extends Reactor {
     }
 
     @Override
-    public void initialize(JsonNode feedNode) {
+    public void initialize(@NonNull JsonNode feedNode) {
         double R = 0.08206;
         double T = feedNode.get("T").asDouble();
         double P = feedNode.get("P").asDouble();
@@ -69,7 +68,11 @@ public class PackedBedReactor extends Reactor {
 
 
     @Override
-    public double[] computeDerivatives(double x, double[] y) {
+    public double[] computeDerivatives(double x, double @NonNull [] y) {
+        if (this.initialReactorState == null){
+            throw new NullPointerException("Reactor not initialized before attempting to solve.");
+        }
+
         double R = 0.08206;
 
         double temperature = y[0];
@@ -135,7 +138,8 @@ public class PackedBedReactor extends Reactor {
         return dydW;
     }
 
-    public Table processResults(double[][] results) {
+    @Override
+    public Table processResults(double @NonNull [] @NonNull [] results) {
         double R = 0.08206;
         double initialPressure = this.initialReactorState.getPressure();
 
@@ -194,7 +198,8 @@ public class PackedBedReactor extends Reactor {
     }
 
 
-    public void plotResults(Table table) {
+    @Override
+    public void plotResults(@NonNull Table table) {
         var x = table.nCol("Catalyst Weight");
 
         var concentrationColumn = Table.create("Concentration Table");
@@ -275,9 +280,8 @@ public class PackedBedReactor extends Reactor {
         output.append("--------------------------\n");
         output.append(String.format("Mode: %-10s\n", this.mode));
         output.append(String.format("Alpha: %-10.4f\n", alpha));
-        output.append(String.format("Final Weight (Wf): %-10.2f\n\n", independentVariable));
+        output.append(String.format("Final Weight (Wf): %-10.2f\n", independentVariable));
 
-        output.append("Reaction Details:\n");
         System.out.println(output.toString());
 
         reaction.summarize();

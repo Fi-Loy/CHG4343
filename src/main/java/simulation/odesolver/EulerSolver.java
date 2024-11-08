@@ -1,11 +1,11 @@
 package simulation.odesolver;
 
-import java.util.Arrays;
+import lombok.NonNull;
 
 public class EulerSolver implements ODESolver {
 
     @Override
-    public double[][] solve(ODESystem system, double[] y0, double x0, double xEnd, double h) {
+    public double[][] solve(@NonNull ODESystem system, double @NonNull  [] y0, double x0, double xEnd, double h) {
         int steps = (int) Math.ceil((xEnd - x0) / h) + 1;
         double[][] results = new double[steps][y0.length];
 
@@ -13,7 +13,7 @@ public class EulerSolver implements ODESolver {
         double[] y = y0.clone();
         results[0] = y.clone();
 
-        int step = 1; // Start from the second row (index 1)
+        int step = 1;
         while (x < xEnd && step < steps) {
             double[] dydx = system.computeDerivatives(x, y);
 

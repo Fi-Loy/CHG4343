@@ -1,10 +1,8 @@
 package simulation.ratelaw;
 
-import simulation.components.Species;
-import simulation.reactors.ReactorState;
-import util.Summarizes;
+import lombok.NonNull;
+import simulation.reactor.ReactorState;
 
-import java.util.List;
 import java.util.Map;
 import java.util.StringJoiner;
 
@@ -12,9 +10,9 @@ public class ArrheniusRateLaw extends RateLaw {
     private final double k0;
     private final double E;
     private final double T0;
-    private final Map<String, Double> orders;
+    @NonNull private final Map<String, Double> orders;
 
-    public ArrheniusRateLaw(double k0, double E, double T0, Map<String, Double> orders) {
+    public ArrheniusRateLaw(double k0, double E, double T0, @NonNull Map<String, Double> orders) {
         this.k0 = k0;
         this.E = E;
         this.T0 = T0;
@@ -23,8 +21,8 @@ public class ArrheniusRateLaw extends RateLaw {
 
 
     @Override
-    public double calculateRate(ReactorState state) {
-        double R = 8.314; // J/(mol·K)
+    public double calculateRate(@NonNull ReactorState state) {
+        double R = 8.314;
         double temperature = state.getTemperature();
         double rate = k0 * Math.exp((E / R) * (1 / T0 - 1 / temperature));
 
@@ -57,19 +55,13 @@ public class ArrheniusRateLaw extends RateLaw {
 
         output.append("\nWhere:\n");
         output.append("k(T) = k0 * exp((E / R) * (1 / T0 - 1 / T))\n");
-        output.append(String.format("k0 = %.4e m^3/(mol-s)\n", k0));
-        output.append(String.format("E  = %.2f J/mol\n", E));
-        output.append("R  = 8.314 J/(mol-K)\n");
-        output.append(String.format("T0 = %.2f K\n", T0));
+        output.append(String.format("k0 = %.4e\n", k0));
+        output.append(String.format("E  = %.2f\n", E));
+        output.append("R  = 8.314\n");
+        output.append(String.format("T0 = %.2f\n", T0));
 
-//        output.append("\nReactant Orders:\n");
-//        output.append(String.format("%-10s | %-10s\n", "Reactant", "Order"));
-//        output.append("-----------|------------\n");
-//        for (Map.Entry<String, Double> entry :orders.entrySet()) {
-//            output.append(String.format("%-10s | %-10.2f\n", entry.getKey(), entry.getValue()));
-//        }
 
-        System.out.println(output.toString());
+        System.out.println(output);
     }
 }
 

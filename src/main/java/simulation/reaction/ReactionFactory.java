@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
+import lombok.NonNull;
 import simulation.ratelaw.RateLaw;
 import simulation.ratelaw.RateLawFactory;
 
 public class ReactionFactory {
-    public static Reaction createReaction(JsonNode reactionNode) {
+    public static Reaction createReaction(@NonNull JsonNode reactionNode) {
         Map<String, Integer> stoichiometry = new HashMap<>();
         JsonNode stoichNode = reactionNode.get("stoichiometry");
         Iterator<String> fieldNames = stoichNode.fieldNames();
@@ -24,6 +26,9 @@ public class ReactionFactory {
         double heat = reactionNode.get("heat").asDouble();
         RateLaw rateLaw = RateLawFactory.createRateLaw(reactionNode.get("rateLaw"));
 
+        if (first == null){
+            throw new NullPointerException("Reaction has no components");
+        }
         return new Reaction(stoichiometry, rateLaw, first, heat);
     }
 }
