@@ -1,6 +1,7 @@
 package simulation.ratelaw;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 
 import java.util.HashMap;

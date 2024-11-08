@@ -1,6 +1,7 @@
 package simulation.reaction;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import simulation.ratelaw.RateLaw;
 import simulation.reactor.ReactorState;
@@ -9,6 +10,7 @@ import util.Summarizes;
 import java.util.Map;
 
 @Data
+@EqualsAndHashCode
 public class Reaction implements Summarizes {
     @NonNull private final Map<String, Integer> stoichiometry;
     @NonNull private final RateLaw rateLaw;

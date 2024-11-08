@@ -1,11 +1,13 @@
 package simulation.ratelaw;
 
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import simulation.reactor.ReactorState;
 
 import java.util.Map;
 import java.util.StringJoiner;
 
+@EqualsAndHashCode(callSuper = true)
 public class ArrheniusRateLaw extends RateLaw {
     private final double k0;
     private final double E;

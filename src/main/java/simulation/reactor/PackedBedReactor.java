@@ -1,6 +1,7 @@
 package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import tech.tablesaw.plotly.Plot;
 import lombok.Getter;
@@ -16,6 +17,7 @@ import tech.tablesaw.plotly.traces.ScatterTrace;
 
 import java.util.*;
 @Getter
+@EqualsAndHashCode(callSuper = true)
 public class PackedBedReactor extends Reactor {
     private final double alpha;
     @NonNull private final Map<String, Integer> speciesIndexMap;

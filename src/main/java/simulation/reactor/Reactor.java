@@ -2,6 +2,7 @@ package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import simulation.components.Species;
 import simulation.odesolver.ODESystem;
@@ -17,6 +18,7 @@ enum ReactorModes {
 }
 
 @Data
+@EqualsAndHashCode
 public abstract class Reactor implements ODESystem, Summarizes {
     @NonNull protected Reaction reaction;
     protected ReactorState initialReactorState;
