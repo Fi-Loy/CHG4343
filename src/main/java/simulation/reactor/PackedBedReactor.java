@@ -1,6 +1,7 @@
 package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import tech.tablesaw.plotly.Plot;
@@ -16,37 +17,46 @@ import tech.tablesaw.plotly.components.Marker;
 import tech.tablesaw.plotly.traces.ScatterTrace;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 @Getter
 @EqualsAndHashCode(callSuper = true)
 public class PackedBedReactor extends Reactor {
     private final double alpha;
-    @NonNull private final Map<String, Integer> speciesIndexMap;
+    @NonNull private final ImmutableMap<String, Integer> speciesIndexMap;
 
     public PackedBedReactor(Reaction reaction, List<Species> speciesList, double Wf, double alpha, String mode) {
         super(reaction, speciesList, Wf, mode);
         this.alpha = alpha;
         this.initialReactorState = null;
+        this.speciesIndexMap = ImmutableMap.copyOf(createSpeciesIndexMap(speciesList));
+    }
 
-        this.speciesIndexMap = new HashMap<>();
+    private Map<String, Integer> createSpeciesIndexMap(List<Species> speciesList) {
+        Map<String, Integer> map = new HashMap<>();
         int index = 2;
         for (Species species : speciesList) {
-            this.speciesIndexMap.put(species.getName(), index++);
+            map.put(species.getName(), index++);
         }
+        return map;
     }
 
     @Override
     public void initialize(@NonNull JsonNode feedNode) {
+        this.initialReactorState = createInitialReactorState(feedNode);
+    }
+
+    private ReactorState createInitialReactorState(JsonNode feedNode) {
         double R = 0.08206;
         double T = feedNode.get("T").asDouble();
         double P = feedNode.get("P").asDouble();
         double V = feedNode.get("V").asDouble();
-        double p = 1;
 
         JsonNode compNode = feedNode.get("composition");
-
         Map<String, Double> molarFlows = new HashMap<>();
-
         double totalMolarRatio = 0.0;
+
         Iterator<String> fieldNames = compNode.fieldNames();
         while (fieldNames.hasNext()) {
             String name = fieldNames.next();
@@ -56,49 +66,46 @@ public class PackedBedReactor extends Reactor {
             totalMolarRatio += ratio;
         }
 
-        if(Double.compare(1.0, totalMolarRatio) != 0){
-            throw new IllegalArgumentException("Molar Ratios should add up to 0");
+        if (Double.compare(1.0, totalMolarRatio) != 0) {
+            throw new IllegalArgumentException("Molar Ratios should add up to 1");
         }
 
-        Map<String, Double> concentrations = new HashMap<>();
-        for (Map.Entry<String, Double> flow : molarFlows.entrySet()){
-            concentrations.put(flow.getKey(), flow.getValue()/V);
-        }
+        Map<String, Double> concentrations = molarFlows.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() / V));
 
-        this.initialReactorState= new ReactorState(T, P, 1, V, molarFlows, concentrations);
+        return new ReactorState(
+                T, P, 1, V,
+                ImmutableMap.copyOf(molarFlows),
+                ImmutableMap.copyOf(concentrations)
+        );
     }
-
 
     @Override
     public double[] computeDerivatives(double x, double @NonNull [] y) {
-        if (this.initialReactorState == null){
+        if (this.initialReactorState == null) {
             throw new NullPointerException("Reactor not initialized before attempting to solve.");
         }
 
         double R = 0.08206;
-
         double temperature = y[0];
         double specificPressure = y[1];
         double initialPressure = this.initialReactorState.getPressure();
         double pressure = specificPressure * initialPressure;
 
-        Map<String, Double> molarFlows = new HashMap<>();
-        for (Species species : speciesList) {
-            String speciesName = species.getName();
-            int speciesIndex = speciesIndexMap.get(speciesName);
-            molarFlows.put(speciesName, y[speciesIndex]);
-        }
+        Map<String, Double> molarFlows = speciesList.stream()
+                .collect(Collectors.toMap(Species::getName, species -> y[speciesIndexMap.get(species.getName())]));
+        molarFlows = ImmutableMap.copyOf(molarFlows);
 
         double totalMolarFlow = molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
-
         double volume = (totalMolarFlow * R * temperature) / pressure;
 
-        Map<String, Double> concentrations = new HashMap<>();
-        for (Map.Entry<String, Double> flow : molarFlows.entrySet()) {
-            concentrations.put(flow.getKey(), flow.getValue() / volume);
-        }
+        Map<String, Double> concentrations = molarFlows.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() / volume));
+        concentrations = ImmutableMap.copyOf(concentrations);
 
-        ReactorState currentState = new ReactorState(temperature, pressure, specificPressure, volume, molarFlows, concentrations);
+        ReactorState currentState = new ReactorState(
+                temperature, pressure, specificPressure, volume, molarFlows, concentrations
+        );
 
         double[] dydW = new double[y.length];
         Arrays.fill(dydW, 0.0);
@@ -110,7 +117,6 @@ public class PackedBedReactor extends Reactor {
         for (Map.Entry<String, Integer> entry : reaction.getStoichiometry().entrySet()) {
             String species = entry.getKey();
             int stoichiometry = entry.getValue();
-
             int speciesIndex = speciesIndexMap.get(species);
             dydW[speciesIndex] += reactionRate * stoichiometry / referenceStoichiometry;
         }
@@ -123,7 +129,6 @@ public class PackedBedReactor extends Reactor {
         for (Species species : speciesList) {
             String speciesName = species.getName();
             double speciesCp = species.getCp();
-
             Double molarFlow = currentState.getMolarFlows().get(speciesName);
 
             if (molarFlow != null) {
@@ -132,7 +137,7 @@ public class PackedBedReactor extends Reactor {
         }
 
         double dTdW = 0;
-        if (mode == ReactorModes.ADIABATIC){
+        if (mode == ReactorModes.ADIABATIC) {
             dTdW = (reactionRate * reaction.getHeat()) / totalCp;
         }
         dydW[0] = dTdW;
@@ -146,13 +151,11 @@ public class PackedBedReactor extends Reactor {
         double initialPressure = this.initialReactorState.getPressure();
 
         List<String> columnNames = new ArrayList<>(List.of("Catalyst Weight", "T", "sp", "P", "V"));
+        List<String> speciesColumns = speciesList.stream()
+                .flatMap(species -> Stream.of("F_" + species.getName(), "C_" + species.getName()))
+                .toList();
+        columnNames = List.copyOf(Stream.concat(columnNames.stream(), speciesColumns.stream()).toList());
 
-        for (Species species : speciesList) {
-            columnNames.add("F_" + species.getName());
-        }
-        for (Species species : speciesList) {
-            columnNames.add("C_" + species.getName());
-        }
 
         Table resultTable = Table.create("Packed Bed Reactor Results");
         for (String columnName : columnNames) {
@@ -164,7 +167,6 @@ public class PackedBedReactor extends Reactor {
         double catalystWeight = 0;
 
         for (double[] row : results) {
-
             List<Double> rowData = new ArrayList<>();
             rowData.add(catalystWeight);
 
@@ -183,7 +185,6 @@ public class PackedBedReactor extends Reactor {
             for (int i = 2; i < row.length; i++) {
                 rowData.add(row[i]);
             }
-
             for (int i = 2; i < row.length; i++) {
                 double concentration = row[i] / volume;
                 rowData.add(concentration);
@@ -198,8 +199,6 @@ public class PackedBedReactor extends Reactor {
 
         return resultTable;
     }
-
-
     @Override
     public void plotResults(@NonNull Table table) {
         var x = table.nCol("Catalyst Weight");

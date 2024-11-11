@@ -3,7 +3,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import simulation.components.Species;
 import simulation.components.SpeciesFactory;
 import simulation.odesolver.ODESolver;
-import simulation.odesolver.ODESystem;
 import simulation.odesolver.RK4Solver;
 import simulation.reaction.Reaction;
 import simulation.reaction.ReactionFactory;
@@ -36,7 +35,6 @@ public class Main {
             resultTable.write().csv("src/main/resources/testoutput.csv");
 
             System.out.println(resultTable.print());
-
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -17,6 +17,7 @@ public class ReactionFactory {
         String first = null;
         while (fieldNames.hasNext()) {
             String name = fieldNames.next();
+            // TODO not good, fails in the case that a product is put first
             if (first==null){
                 first = name;
             }

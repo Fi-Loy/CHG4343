@@ -1,24 +1,31 @@
 package simulation.ratelaw;
 
+import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NonNull;
 import simulation.reactor.ReactorState;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-@EqualsAndHashCode(callSuper = true)
-public class ArrheniusRateLaw extends RateLaw {
+@Getter
+@EqualsAndHashCode
+public class ArrheniusRateLaw implements RateLaw {
     private final double k0;
     private final double E;
     private final double T0;
     @NonNull private final Map<String, Double> orders;
 
     public ArrheniusRateLaw(double k0, double E, double T0, @NonNull Map<String, Double> orders) {
+        if (orders.isEmpty()) {
+            throw new IllegalArgumentException("Orders cannot be empty.");
+        }
         this.k0 = k0;
         this.E = E;
         this.T0 = T0;
-        this.orders = orders;
+        this.orders = ImmutableMap.copyOf(new HashMap<>(orders));
     }
 
 
@@ -38,6 +45,7 @@ public class ArrheniusRateLaw extends RateLaw {
         return -rate;
     }
 
+    @Override
     public void summarize() {
         StringBuilder output = new StringBuilder();
         output.append("Rate Law Summary\n");

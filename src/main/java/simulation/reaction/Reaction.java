@@ -5,13 +5,13 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import simulation.ratelaw.RateLaw;
 import simulation.reactor.ReactorState;
-import util.Summarizes;
+import util.Summarizable;
 
 import java.util.Map;
 
 @Data
 @EqualsAndHashCode
-public class Reaction implements Summarizes {
+public class Reaction implements Summarizable {
     @NonNull private final Map<String, Integer> stoichiometry;
     @NonNull private final RateLaw rateLaw;
     @NonNull private final String reference;

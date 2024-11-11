@@ -1,13 +1,12 @@
 package simulation.components;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NonNull;
 
-@Data
+@Getter
 @AllArgsConstructor
 public class Species {
-    @NonNull private String name;
-    private double cp;
-
+    @NonNull private final String name;
+    private final double cp;
 }

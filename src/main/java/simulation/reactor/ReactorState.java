@@ -1,43 +1,41 @@
 package simulation.reactor;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NonNull;
+import com.google.common.collect.ImmutableMap;
+import lombok.*;
 
 import java.util.*;
 
-@Data
-@AllArgsConstructor
+@Getter
 @EqualsAndHashCode
 public class ReactorState {
-    private double temperature;
-    private double pressure;
-    private double specificPressure;
-    private double volumetricFlowRate;
-    @NonNull private Map<String, Double> molarFlows;
-    @NonNull private Map<String, Double> concentrations;
+    private final double temperature;
+    private final double pressure;
+    private final double specificPressure;
+    private final double volumetricFlowRate;
+    @NonNull private final Map<String, Double> molarFlows;
+    @NonNull private final Map<String, Double> concentrations;
 
-    public ReactorState clone() {
-        Map<String, Double> molarFlowsClone = new HashMap<>(this.molarFlows);
-        Map<String, Double> concentrationsClone = new HashMap<>(this.concentrations);
-
-        return new ReactorState(
-                this.temperature,
-                this.pressure,
-                this.specificPressure,
-                this.volumetricFlowRate,
-                molarFlowsClone,
-                concentrationsClone
-        );
+    public ReactorState(
+            double temperature,
+            double pressure,
+            double specificPressure,
+            double volumetricFlowRate,
+            @NonNull Map<String, Double> molarFlows,
+            @NonNull Map<String, Double> concentrations
+    ) {
+        if (molarFlows.isEmpty() || concentrations.isEmpty()) {
+            throw new IllegalArgumentException("Molar flows and concentrations cannot be empty.");
+        }
+        this.temperature = temperature;
+        this.pressure = pressure;
+        this.specificPressure = specificPressure;
+        this.volumetricFlowRate = volumetricFlowRate;
+        this.molarFlows = ImmutableMap.copyOf(new HashMap<>(molarFlows));
+        this.concentrations = ImmutableMap.copyOf(new HashMap<>(concentrations));
     }
 
-    public double getTotalMolarFlow(){
-        double total = 0;
-        for (Map.Entry<String, Double> flow : molarFlows.entrySet()){
-            total += flow.getValue();
-        }
-        return total;
+    public double getTotalMolarFlow() {
+        return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     public double[] toArray() {

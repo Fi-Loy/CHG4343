@@ -1,58 +1,54 @@
 package simulation.odesolver;
 
 import lombok.NonNull;
+import util.VectorUtils;
+import java.util.Arrays;
 
 public class RK4Solver implements ODESolver{
 
     @Override
     public double[][] solve(@NonNull ODESystem system, double@NonNull [] y0, double x0, double xEnd, double h) {
+
+        if (y0.length == 0) {
+            throw new IllegalArgumentException("Initial conditions (y0) must not be empty.");
+        }
+        if (h <= 0) {
+            throw new IllegalArgumentException("Step size (h) must be positive.");
+        }
+        if (xEnd <= x0) {
+            throw new IllegalArgumentException("xEnd must be greater than x0.");
+        }
+
         int steps = (int) Math.ceil((xEnd - x0) / h) + 1;
         double[][] results = new double[steps][y0.length];
 
         double x = x0;
-        double[] y = y0.clone();
-        results[0] = y.clone();
+        double[] y = Arrays.copyOf(y0, y0.length);
+        results[0] = Arrays.copyOf(y, y.length);
 
         int step = 1;
-        while (x < xEnd && step < steps) {
-            double[] k1 = multiplyArray(system.computeDerivatives(x, y), h);
-            double[] yTemp = addArrays(y, multiplyArray(k1, 0.5));
+        while (x < xEnd) {
+            double[] k1 = VectorUtils.multiplyVector(system.computeDerivatives(x, y), h);
+            double[] yTemp = VectorUtils.addVectors(y, VectorUtils.multiplyVector(k1, 0.5));
 
-            double[] k2 = multiplyArray(system.computeDerivatives(x + h / 2.0, yTemp), h);
-            yTemp = addArrays(y, multiplyArray(k2, 0.5));
+            double[] k2 = VectorUtils.multiplyVector(system.computeDerivatives(x + h / 2.0, yTemp), h);
+            yTemp = VectorUtils.addVectors(y, VectorUtils.multiplyVector(k2, 0.5));
 
-            double[] k3 = multiplyArray(system.computeDerivatives(x + h / 2.0, yTemp), h);
-            yTemp = addArrays(y, k3);
+            double[] k3 = VectorUtils.multiplyVector(system.computeDerivatives(x + h / 2.0, yTemp), h);
+            yTemp = VectorUtils.addVectors(y, k3);
 
-            double[] k4 = multiplyArray(system.computeDerivatives(x + h, yTemp), h);
+            double[] k4 = VectorUtils.multiplyVector(system.computeDerivatives(x + h, yTemp), h);
 
             for (int i = 0; i < y.length; i++) {
                 y[i] += (k1[i] + 2 * k2[i] + 2 * k3[i] + k4[i]) / 6.0;
             }
 
             x += h;
-            results[step] = y.clone();
+            results[step] = Arrays.copyOf(y, y.length);
 
             step++;
         }
 
         return results;
     }
-
-    public static double[] addArrays(double @NonNull  [] a, double @NonNull [] b) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] + b[i];
-        }
-        return result;
-    }
-
-    public static double[] multiplyArray(double @NonNull [] a, double scalar) {
-        double[] result = new double[a.length];
-        for (int i = 0; i < a.length; i++) {
-            result[i] = a[i] * scalar;
-        }
-        return result;
-    }
-
 }

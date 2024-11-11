@@ -8,7 +8,7 @@ import simulation.components.Species;
 import simulation.odesolver.ODESystem;
 import simulation.reaction.Reaction;
 import tech.tablesaw.api.Table;
-import util.Summarizes;
+import util.Summarizable;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ enum ReactorModes {
 
 @Data
 @EqualsAndHashCode
-public abstract class Reactor implements ODESystem, Summarizes {
+public abstract class Reactor implements ODESystem, Summarizable {
     @NonNull protected Reaction reaction;
     protected ReactorState initialReactorState;
     protected double independentVariable;

@@ -1,5 +1,5 @@
 package util;
 
-public interface Summarizes {
+public interface Summarizable {
     public void summarize();
 }
