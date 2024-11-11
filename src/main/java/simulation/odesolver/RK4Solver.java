@@ -7,7 +7,13 @@ import java.util.Arrays;
 public class RK4Solver implements ODESolver{
 
     @Override
-    public double[][] solve(@NonNull ODESystem system, double@NonNull [] y0, double x0, double xEnd, double h) {
+    public double[][] solve(
+            @NonNull ODESystem system,
+            double@NonNull [] y0,
+            double x0,
+            double xEnd,
+            double h
+    ) {
 
         if (y0.length == 0) {
             throw new IllegalArgumentException("Initial conditions (y0) must not be empty.");

@@ -25,7 +25,13 @@ public abstract class Reactor implements ODESystem, Summarizable {
     protected double independentVariable;
     @NonNull protected ReactorModes mode;
     @NonNull protected List<Species> speciesList;
-    public Reactor(@NonNull Reaction reaction, @NonNull List<Species> speciesList, double independentVariable, @NonNull String mode) {
+
+    public Reactor(
+            @NonNull Reaction reaction,
+            @NonNull List<Species> speciesList,
+            double independentVariable,
+            @NonNull String mode
+    ) {
         this.reaction = reaction;
         this.speciesList = speciesList;
         this.independentVariable = independentVariable;

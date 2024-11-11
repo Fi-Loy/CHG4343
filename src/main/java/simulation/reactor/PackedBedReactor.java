@@ -26,7 +26,13 @@ public class PackedBedReactor extends Reactor {
     private final double alpha;
     @NonNull private final ImmutableMap<String, Integer> speciesIndexMap;
 
-    public PackedBedReactor(Reaction reaction, List<Species> speciesList, double Wf, double alpha, String mode) {
+    public PackedBedReactor(
+            Reaction reaction,
+            List<Species> speciesList,
+            double Wf,
+            double alpha,
+            String mode
+    ) {
         super(reaction, speciesList, Wf, mode);
         this.alpha = alpha;
         this.initialReactorState = null;
@@ -37,7 +43,7 @@ public class PackedBedReactor extends Reactor {
         Map<String, Integer> map = new HashMap<>();
         int index = 2;
         for (Species species : speciesList) {
-            map.put(species.getName(), index++);
+            map.put(species.name(), index++);
         }
         return map;
     }
@@ -93,7 +99,7 @@ public class PackedBedReactor extends Reactor {
         double pressure = specificPressure * initialPressure;
 
         Map<String, Double> molarFlows = speciesList.stream()
-                .collect(Collectors.toMap(Species::getName, species -> y[speciesIndexMap.get(species.getName())]));
+                .collect(Collectors.toMap(Species::name, species -> y[speciesIndexMap.get(species.name())]));
         molarFlows = ImmutableMap.copyOf(molarFlows);
 
         double totalMolarFlow = molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -111,10 +117,10 @@ public class PackedBedReactor extends Reactor {
         Arrays.fill(dydW, 0.0);
 
         double reactionRate = reaction.calculateRate(currentState);
-        String referenceSpecie = reaction.getReference();
-        int referenceStoichiometry = reaction.getStoichiometry().get(referenceSpecie);
+        String referenceSpecie = reaction.reference();
+        int referenceStoichiometry = reaction.stoichiometry().get(referenceSpecie);
 
-        for (Map.Entry<String, Integer> entry : reaction.getStoichiometry().entrySet()) {
+        for (Map.Entry<String, Integer> entry : reaction.stoichiometry().entrySet()) {
             String species = entry.getKey();
             int stoichiometry = entry.getValue();
             int speciesIndex = speciesIndexMap.get(species);
@@ -127,8 +133,8 @@ public class PackedBedReactor extends Reactor {
 
         double totalCp = 0;
         for (Species species : speciesList) {
-            String speciesName = species.getName();
-            double speciesCp = species.getCp();
+            String speciesName = species.name();
+            double speciesCp = species.cp();
             Double molarFlow = currentState.getMolarFlows().get(speciesName);
 
             if (molarFlow != null) {
@@ -138,7 +144,7 @@ public class PackedBedReactor extends Reactor {
 
         double dTdW = 0;
         if (mode == ReactorModes.ADIABATIC) {
-            dTdW = (reactionRate * reaction.getHeat()) / totalCp;
+            dTdW = (reactionRate * reaction.heat()) / totalCp;
         }
         dydW[0] = dTdW;
 
@@ -152,7 +158,7 @@ public class PackedBedReactor extends Reactor {
 
         List<String> columnNames = new ArrayList<>(List.of("Catalyst Weight", "T", "sp", "P", "V"));
         List<String> speciesColumns = speciesList.stream()
-                .flatMap(species -> Stream.of("F_" + species.getName(), "C_" + species.getName()))
+                .flatMap(species -> Stream.of("F_" + species.name(), "C_" + species.name()))
                 .toList();
         columnNames = List.copyOf(Stream.concat(columnNames.stream(), speciesColumns.stream()).toList());
 
@@ -213,11 +219,21 @@ public class PackedBedReactor extends Reactor {
 
         var concentrationTraces = new ScatterTrace[concentrationColumn.columnCount()];
         for(int i = 0;  i < concentrationColumn.columnCount(); i++){
-            concentrationTraces[i] = (ScatterTrace.builder(x, concentrationColumn.nCol(i)).mode(ScatterTrace.Mode.LINE).name(concentrationColumn.nCol(i).name()).build());
+            concentrationTraces[i] = (
+                    ScatterTrace
+                            .builder(x, concentrationColumn.nCol(i))
+                            .mode(ScatterTrace.Mode.LINE)
+                            .name(concentrationColumn.nCol(i).name())
+                            .build()
+            );
         }
 
-        Layout concentrationLayout =
-                Layout.builder().title("Specie Concentrations Versus Catalyst Weight in Packed Bed Reactor").build();
+        Layout concentrationLayout = (
+                Layout
+                        .builder()
+                        .title("Specie Concentrations Versus Catalyst Weight in Packed Bed Reactor")
+                        .build()
+                );
         Plot.show(new Figure(concentrationLayout, concentrationTraces));
 
         var flowColumn = Table.create("Concentration Table");

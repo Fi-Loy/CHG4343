@@ -5,7 +5,13 @@ import lombok.NonNull;
 public class EulerSolver implements ODESolver {
 
     @Override
-    public double[][] solve(@NonNull ODESystem system, double @NonNull  [] y0, double x0, double xEnd, double h) {
+    public double[][] solve(
+            @NonNull ODESystem system,
+            double @NonNull  [] y0,
+            double x0,
+            double xEnd,
+            double h
+    ) {
         int steps = (int) Math.ceil((xEnd - x0) / h) + 1;
         double[][] results = new double[steps][y0.length];
 

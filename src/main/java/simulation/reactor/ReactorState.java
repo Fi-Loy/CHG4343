@@ -35,7 +35,7 @@ public class ReactorState {
     }
 
     public double getTotalMolarFlow() {
-        return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
+      return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     public double[] toArray() {

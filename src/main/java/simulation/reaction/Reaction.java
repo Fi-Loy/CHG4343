@@ -9,14 +9,12 @@ import util.Summarizable;
 
 import java.util.Map;
 
-@Data
-@EqualsAndHashCode
-public class Reaction implements Summarizable {
-    @NonNull private final Map<String, Integer> stoichiometry;
-    @NonNull private final RateLaw rateLaw;
-    @NonNull private final String reference;
-    private final double heat;
-
+public record Reaction(
+        @NonNull Map<String, Integer> stoichiometry,
+        @NonNull RateLaw rateLaw,
+        @NonNull String reference,
+        double heat
+) implements Summarizable {
     public double calculateRate(@NonNull ReactorState state) {
         return rateLaw.calculateRate(state);
     }

@@ -18,7 +18,12 @@ public class ArrheniusRateLaw implements RateLaw {
     private final double T0;
     @NonNull private final Map<String, Double> orders;
 
-    public ArrheniusRateLaw(double k0, double E, double T0, @NonNull Map<String, Double> orders) {
+    public ArrheniusRateLaw(
+            double k0,
+            double E,
+            double T0,
+            @NonNull Map<String,Double> orders
+    ) {
         if (orders.isEmpty()) {
             throw new IllegalArgumentException("Orders cannot be empty.");
         }

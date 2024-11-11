@@ -10,7 +10,11 @@ import java.util.List;
 
 @EqualsAndHashCode
 public class ReactorFactory {
-    public static Reactor createReactor(@NonNull JsonNode reactorNode, @NonNull Reaction reaction, @NonNull List<Species> speciesList) {
+    public static Reactor createReactor(
+            @NonNull JsonNode reactorNode,
+            @NonNull Reaction reaction,
+            @NonNull List<Species> speciesList
+    ) {
         String type = reactorNode.get("type").asText();
 
         switch (type.toLowerCase()) {
