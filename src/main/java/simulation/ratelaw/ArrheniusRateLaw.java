@@ -1,8 +1,6 @@
 package simulation.ratelaw;
 
 import com.google.common.collect.ImmutableMap;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
 import lombok.NonNull;
 import simulation.reactor.ReactorState;
 
@@ -10,19 +8,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-@Getter
-@EqualsAndHashCode
-public class ArrheniusRateLaw implements RateLaw {
-    private final double k0;
-    private final double E;
-    private final double T0;
-    @NonNull private final Map<String, Double> orders;
-
+public record ArrheniusRateLaw(
+        double k0,
+        double E,
+        double T0,
+        @NonNull Map<String,Double> orders
+) implements RateLaw {
     public ArrheniusRateLaw(
             double k0,
             double E,
             double T0,
-            @NonNull Map<String,Double> orders
+            @NonNull Map<String, Double> orders
     ) {
         if (orders.isEmpty()) {
             throw new IllegalArgumentException("Orders cannot be empty.");
@@ -37,13 +33,13 @@ public class ArrheniusRateLaw implements RateLaw {
     @Override
     public double calculateRate(@NonNull ReactorState state) {
         double R = 8.314;
-        double temperature = state.getTemperature();
+        double temperature = state.temperature();
         double rate = k0 * Math.exp((E / R) * (1 / T0 - 1 / temperature));
 
         for (String speciesName : orders.keySet()) {
             if (orders.containsKey(speciesName)) {
                 Double order = orders.get(speciesName);
-                double concentration = state.getConcentrations().get(speciesName);
+                double concentration = state.concentrations().get(speciesName);
                 rate *= Math.pow(concentration, order);
             }
         }

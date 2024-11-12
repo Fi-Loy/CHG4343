@@ -5,16 +5,14 @@ import lombok.*;
 
 import java.util.*;
 
-@Getter
-@EqualsAndHashCode
-public class ReactorState {
-    private final double temperature;
-    private final double pressure;
-    private final double specificPressure;
-    private final double volumetricFlowRate;
-    @NonNull private final Map<String, Double> molarFlows;
-    @NonNull private final Map<String, Double> concentrations;
-
+public record ReactorState(
+        double temperature,
+        double pressure,
+        double specificPressure,
+        double volumetricFlowRate,
+        @NonNull Map<String, Double> molarFlows,
+        @NonNull Map<String, Double> concentrations
+) {
     public ReactorState(
             double temperature,
             double pressure,
@@ -35,7 +33,7 @@ public class ReactorState {
     }
 
     public double getTotalMolarFlow() {
-      return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
+        return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     public double[] toArray() {

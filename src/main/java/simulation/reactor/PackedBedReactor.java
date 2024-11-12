@@ -95,7 +95,7 @@ public class PackedBedReactor extends Reactor {
         double R = 0.08206;
         double temperature = y[0];
         double specificPressure = y[1];
-        double initialPressure = this.initialReactorState.getPressure();
+        double initialPressure = this.initialReactorState.pressure();
         double pressure = specificPressure * initialPressure;
 
         Map<String, Double> molarFlows = speciesList.stream()
@@ -127,7 +127,7 @@ public class PackedBedReactor extends Reactor {
             dydW[speciesIndex] += reactionRate * stoichiometry / referenceStoichiometry;
         }
 
-        double initialTemperature = this.initialReactorState.getTemperature();
+        double initialTemperature = this.initialReactorState.temperature();
         double initialTotalFlow = this.initialReactorState.getTotalMolarFlow();
         dydW[1] = -(alpha / (2 * pressure)) * (totalMolarFlow / initialTotalFlow) * (temperature / initialTemperature);
 
@@ -135,7 +135,7 @@ public class PackedBedReactor extends Reactor {
         for (Species species : speciesList) {
             String speciesName = species.name();
             double speciesCp = species.cp();
-            Double molarFlow = currentState.getMolarFlows().get(speciesName);
+            Double molarFlow = currentState.molarFlows().get(speciesName);
 
             if (molarFlow != null) {
                 totalCp += molarFlow * speciesCp;
@@ -154,7 +154,7 @@ public class PackedBedReactor extends Reactor {
     @Override
     public Table processResults(double @NonNull [] @NonNull [] results) {
         double R = 0.08206;
-        double initialPressure = this.initialReactorState.getPressure();
+        double initialPressure = this.initialReactorState.pressure();
 
         List<String> columnNames = new ArrayList<>(List.of("Catalyst Weight", "T", "sp", "P", "V"));
         List<String> speciesColumns = speciesList.stream()
