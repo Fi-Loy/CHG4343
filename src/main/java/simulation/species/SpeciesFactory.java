@@ -1,10 +1,11 @@
-package simulation.components;
+package simulation.species;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import lombok.NonNull;
 
 public class SpeciesFactory {
+    // TODO units tests on specie creation for duplicate species, no species, ect
     public static ImmutableList<Species> createSpecies(@NonNull JsonNode speciesNode) {
         ImmutableList.Builder<Species> speciesListBuilder = ImmutableList.builder();
         for (JsonNode spNode : speciesNode) {

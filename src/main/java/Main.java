@@ -1,8 +1,8 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import simulation.components.Species;
-import simulation.components.SpeciesFactory;
+import simulation.species.Species;
+import simulation.species.SpeciesFactory;
 import simulation.odesolver.ODESolver;
 import simulation.odesolver.RK4Solver;
 import simulation.reaction.Reaction;
@@ -18,9 +18,11 @@ public class Main {
         var objectMapper = new ObjectMapper();
 
         try {
+            // Read input
             InputStream inputStream = Main.class.getClassLoader().getResourceAsStream("irreversible_powerlaw.json");
             JsonNode rootNode = objectMapper.readTree(inputStream);
 
+            // Create necessary objects
             ImmutableList<Species> speciesList = SpeciesFactory.createSpecies(rootNode.get("species"));
             Reaction reaction = ReactionFactory.createReaction(rootNode.get("reaction"));
             Reactor reactor = ReactorFactory.createReactor(rootNode.get("reactor"), reaction, speciesList);
@@ -28,6 +30,7 @@ public class Main {
 
             reactor.summarize();
 
+            // Solve and process
             ODESolver solver = new RK4Solver();
             double[][] results = solver.solve(reactor, reactor.getInitialReactorState().toArray(), 0.0, reactor.getIndependentVariable(), 0.05);
             Table resultTable = reactor.processResults(results);

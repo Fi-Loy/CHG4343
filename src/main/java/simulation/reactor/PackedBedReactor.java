@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import tech.tablesaw.plotly.Plot;
 import lombok.Getter;
-import simulation.components.Species;
+import simulation.species.Species;
 import tech.tablesaw.api.DoubleColumn;
 import tech.tablesaw.api.Table;
 import simulation.reaction.Reaction;
@@ -40,6 +40,7 @@ public class PackedBedReactor extends Reactor {
         this.speciesIndexMap = ImmutableMap.copyOf(createSpeciesIndexMap(speciesList));
     }
 
+    // Maps specie to indexes in the state vector to track their flow rates
     private Map<String, Integer> createSpeciesIndexMap(ImmutableList<Species> speciesList) {
         Map<String, Integer> map = new HashMap<>();
         int index = 2;
@@ -54,6 +55,7 @@ public class PackedBedReactor extends Reactor {
         this.initialReactorState = createInitialReactorState(feedNode);
     }
 
+    // initialize reactor based on feed conditions
     private ReactorState createInitialReactorState(JsonNode feedNode) {
         double R = 0.08206;
         double T = feedNode.get("T").asDouble();
@@ -87,6 +89,7 @@ public class PackedBedReactor extends Reactor {
         );
     }
 
+    // compute the derivative of the state vector
     @Override
     public double[] computeDerivatives(double x, double @NonNull [] y) {
         if (this.initialReactorState == null) {
@@ -152,6 +155,7 @@ public class PackedBedReactor extends Reactor {
         return dydW;
     }
 
+    // take in the raw result matrix and format / process into dataframe
     @Override
     public Table processResults(double @NonNull [] @NonNull [] results) {
         double R = 0.08206;
@@ -206,6 +210,8 @@ public class PackedBedReactor extends Reactor {
 
         return resultTable;
     }
+
+    // plotting routine from processed dataframe
     @Override
     public void plotResults(@NonNull Table table) {
         var x = table.nCol("Catalyst Weight");
@@ -290,6 +296,7 @@ public class PackedBedReactor extends Reactor {
     }
 
 
+    // summary of the reactor conditions
     @Override
     public void summarize() {
 
@@ -301,6 +308,7 @@ public class PackedBedReactor extends Reactor {
 
         System.out.println(output);
 
+        // reaction also implements summarize, call that
         reaction.summarize();
 
     }

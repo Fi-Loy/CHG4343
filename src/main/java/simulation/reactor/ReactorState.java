@@ -36,6 +36,8 @@ public record ReactorState(
         return molarFlows.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
+    // return state vector that PBR expects
+    // TODO migrate over to interface and have each eactor implement its own state vector array creation
     public double[] toArray() {
         int size = 2 + molarFlows.size();
         double[] array = new double[size];

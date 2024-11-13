@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import simulation.components.Species;
+import simulation.species.Species;
 import simulation.odesolver.ODESystem;
 import simulation.reaction.Reaction;
 import tech.tablesaw.api.Table;

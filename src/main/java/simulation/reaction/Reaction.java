@@ -16,6 +16,7 @@ public record Reaction(
         return rateLaw.calculateRate(state);
     }
 
+    // summarize the stoichiometry of the reaction
     public void summarize(){
         StringBuilder output = new StringBuilder();
 

@@ -4,10 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
-import simulation.components.Species;
+import simulation.species.Species;
 import simulation.reaction.Reaction;
-
-import java.util.List;
 
 @EqualsAndHashCode
 public class ReactorFactory {

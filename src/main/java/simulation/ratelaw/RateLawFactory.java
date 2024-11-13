@@ -15,6 +15,9 @@ public class RateLawFactory {
         };
     }
 
+    // build ArrheniusRateLaw from JSON
+    // TODO all validation to all fields
+    // TODO write unit tests for creation
     private static RateLaw createArrheniusRateLaw(@NonNull JsonNode rateLawNode) {
         JsonNode params = rateLawNode.get("parameters");
         if (params == null || !params.has("k0") || !params.has("E") || !params.has("T0")) {

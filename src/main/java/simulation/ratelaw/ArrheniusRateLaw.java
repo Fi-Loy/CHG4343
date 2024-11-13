@@ -15,6 +15,7 @@ public record ArrheniusRateLaw(
         @NonNull ImmutableMap<String,Double> orders
 ) implements RateLaw {
 
+    // calculate raw, including T dependent rate constant using ReactorState
     @Override
     public double calculateRate(@NonNull ReactorState state) {
         double R = 8.314;
@@ -31,7 +32,7 @@ public record ArrheniusRateLaw(
         return -rate;
     }
 
-    @Override
+    // summary of the rate law    @Override
     public void summarize() {
         StringBuilder output = new StringBuilder();
         output.append("Rate Law Summary\n");

@@ -1,4 +1,4 @@
-package simulation.components;
+package simulation.species;
 
 import lombok.NonNull;
 
