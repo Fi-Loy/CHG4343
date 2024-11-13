@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import simulation.components.Species;
 import simulation.components.SpeciesFactory;
 import simulation.odesolver.ODESolver;
@@ -11,7 +12,6 @@ import simulation.reactor.ReactorFactory;
 import tech.tablesaw.api.Table;
 
 import java.io.InputStream;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
@@ -21,7 +21,7 @@ public class Main {
             InputStream inputStream = Main.class.getClassLoader().getResourceAsStream("irreversible_powerlaw.json");
             JsonNode rootNode = objectMapper.readTree(inputStream);
 
-            List<Species> speciesList = SpeciesFactory.createSpecies(rootNode.get("species"));
+            ImmutableList<Species> speciesList = SpeciesFactory.createSpecies(rootNode.get("species"));
             Reaction reaction = ReactionFactory.createReaction(rootNode.get("reaction"));
             Reactor reactor = ReactorFactory.createReactor(rootNode.get("reactor"), reaction, speciesList);
             reactor.initialize(rootNode.get("feed"));

@@ -1,16 +1,13 @@
 package simulation.reaction;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.google.common.collect.ImmutableMap;
 import lombok.NonNull;
 import simulation.ratelaw.RateLaw;
 import simulation.reactor.ReactorState;
 import util.Summarizable;
 
-import java.util.Map;
-
 public record Reaction(
-        @NonNull Map<String, Integer> stoichiometry,
+        @NonNull ImmutableMap<String, Integer> stoichiometry,
         @NonNull RateLaw rateLaw,
         @NonNull String reference,
         double heat
@@ -28,7 +25,7 @@ public record Reaction(
         output.append("Stoichiometry:\n");
         output.append(String.format("%-10s | %-10s\n", "Species", "Coefficient"));
         output.append("-----------|------------\n");
-        for (Map.Entry<String, Integer> entry : stoichiometry.entrySet()) {
+        for (ImmutableMap.Entry<String, Integer> entry : stoichiometry.entrySet()) {
             output.append(String.format("%-10s | %-10d\n", entry.getKey(), entry.getValue()));
         }
 

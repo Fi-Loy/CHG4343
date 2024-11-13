@@ -12,23 +12,8 @@ public record ArrheniusRateLaw(
         double k0,
         double E,
         double T0,
-        @NonNull Map<String,Double> orders
+        @NonNull ImmutableMap<String,Double> orders
 ) implements RateLaw {
-    public ArrheniusRateLaw(
-            double k0,
-            double E,
-            double T0,
-            @NonNull Map<String, Double> orders
-    ) {
-        if (orders.isEmpty()) {
-            throw new IllegalArgumentException("Orders cannot be empty.");
-        }
-        this.k0 = k0;
-        this.E = E;
-        this.T0 = T0;
-        this.orders = ImmutableMap.copyOf(new HashMap<>(orders));
-    }
-
 
     @Override
     public double calculateRate(@NonNull ReactorState state) {

@@ -1,6 +1,7 @@
 package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import simulation.components.Species;
@@ -13,7 +14,7 @@ public class ReactorFactory {
     public static Reactor createReactor(
             @NonNull JsonNode reactorNode,
             @NonNull Reaction reaction,
-            @NonNull List<Species> speciesList
+            @NonNull ImmutableList<Species> speciesList
     ) {
         String type = reactorNode.get("type").asText();
 

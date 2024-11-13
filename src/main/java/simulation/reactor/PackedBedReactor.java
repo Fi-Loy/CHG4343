@@ -1,6 +1,7 @@
 package simulation.reactor;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -28,7 +29,7 @@ public class PackedBedReactor extends Reactor {
 
     public PackedBedReactor(
             Reaction reaction,
-            List<Species> speciesList,
+            ImmutableList<Species> speciesList,
             double Wf,
             double alpha,
             String mode
@@ -39,7 +40,7 @@ public class PackedBedReactor extends Reactor {
         this.speciesIndexMap = ImmutableMap.copyOf(createSpeciesIndexMap(speciesList));
     }
 
-    private Map<String, Integer> createSpeciesIndexMap(List<Species> speciesList) {
+    private Map<String, Integer> createSpeciesIndexMap(ImmutableList<Species> speciesList) {
         Map<String, Integer> map = new HashMap<>();
         int index = 2;
         for (Species species : speciesList) {
@@ -291,15 +292,14 @@ public class PackedBedReactor extends Reactor {
 
     @Override
     public void summarize() {
-        StringBuilder output = new StringBuilder();
 
-        output.append("Packed Bed Reactor Summary\n");
-        output.append("--------------------------\n");
-        output.append(String.format("Mode: %-10s\n", this.mode));
-        output.append(String.format("Alpha: %-10.4f\n", alpha));
-        output.append(String.format("Final Weight (Wf): %-10.2f\n", independentVariable));
+        String output = "Packed Bed Reactor Summary\n" +
+                "--------------------------\n" +
+                String.format("Mode: %-10s\n", this.mode) +
+                String.format("Alpha: %-10.4f\n", alpha) +
+                String.format("Final Weight (Wf): %-10.2f\n", independentVariable);
 
-        System.out.println(output.toString());
+        System.out.println(output);
 
         reaction.summarize();
 

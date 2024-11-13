@@ -8,6 +8,7 @@ import simulation.components.Species;
 import simulation.odesolver.ODESystem;
 import simulation.reaction.Reaction;
 import tech.tablesaw.api.Table;
+import util.Analyzable;
 import util.Summarizable;
 
 import java.util.List;
@@ -19,12 +20,12 @@ enum ReactorModes {
 
 @Data
 @EqualsAndHashCode
-public abstract class Reactor implements ODESystem, Summarizable {
-    @NonNull protected Reaction reaction;
+public abstract class Reactor implements ODESystem, Summarizable, Analyzable {
+    @NonNull protected final Reaction reaction;
     protected ReactorState initialReactorState;
-    protected double independentVariable;
-    @NonNull protected ReactorModes mode;
-    @NonNull protected List<Species> speciesList;
+    protected final double independentVariable;
+    @NonNull final protected ReactorModes mode;
+    @NonNull protected final List<Species> speciesList;
 
     public Reactor(
             @NonNull Reaction reaction,
@@ -39,7 +40,7 @@ public abstract class Reactor implements ODESystem, Summarizable {
         switch (mode.toLowerCase()) {
             case "adiabatic" -> this.mode = ReactorModes.ADIABATIC;
             case "isothermal" -> this.mode = ReactorModes.ISOTHERMAL;
-            default -> throw new IllegalArgumentException("reactor mode should be `adiabtic` or `isothermal`");
+            default -> throw new IllegalArgumentException("reactor mode should be `adiabatic` or `isothermal`");
         }
     }
 
