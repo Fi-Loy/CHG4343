@@ -20,19 +20,19 @@ enum ReactorModes {
 @Data
 @EqualsAndHashCode
 public abstract class Reactor implements ODESystem, Summarizable {
-    @NonNull protected Reaction reaction;
+    @NonNull protected List<Reaction> reactionList;
     protected ReactorState initialReactorState;
     protected double independentVariable;
     @NonNull protected ReactorModes mode;
     @NonNull protected List<Species> speciesList;
 
     public Reactor(
-            @NonNull Reaction reaction,
+            @NonNull List<Reaction> reactionList,
             @NonNull List<Species> speciesList,
             double independentVariable,
             @NonNull String mode
     ) {
-        this.reaction = reaction;
+        this.reactionList = reactionList;
         this.speciesList = speciesList;
         this.independentVariable = independentVariable;
 

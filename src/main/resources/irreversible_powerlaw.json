@@ -17,27 +17,32 @@
       "cp": 10.0
     }
   ],
-  "reaction": {
-    "type": "power-law",
-    "isReversible": false,
-    "heat" : 20000,
-    "stoichiometry": {
-      "A": -2,
-      "B": 1,
-      "C": 2
-    },
-    "rateLaw": {
-      "type": "arrhenius",
-      "parameters": {
-        "k0": 10.0,
-        "E": 31400,
-        "T0": 450
+  "reactions": [
+    {
+    "reaction": {
+      "type": "power-law",
+      "isReversible": false,
+      "heat" : 20000,
+      "stoichiometry": {
+        "A": -2,
+        "B": 1,
+        "C": 2,
+        "ref": "A"
       },
-      "orders": {
-        "A": 2.0
+      "rateLaw": {
+        "type": "arrhenius",
+        "parameters": {
+          "k0": 10.0,
+          "E": 31400,
+          "T0": 450
+        },
+        "orders": {
+          "A": 2.0
+        }
       }
     }
-  },
+    }
+  ],
   "reactor": {
     "type": "packed-bed",
     "mode": "adiabatic",

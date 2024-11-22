@@ -22,8 +22,8 @@ public class Main {
             JsonNode rootNode = objectMapper.readTree(inputStream);
 
             List<Species> speciesList = SpeciesFactory.createSpecies(rootNode.get("species"));
-            Reaction reaction = ReactionFactory.createReaction(rootNode.get("reaction"));
-            Reactor reactor = ReactorFactory.createReactor(rootNode.get("reactor"), reaction, speciesList);
+            List<Reaction> reactionList = ReactionFactory.createReactionsList(rootNode.get("reactions"));
+            Reactor reactor = ReactorFactory.createReactor(rootNode.get("reactor"), reactionList, speciesList);
             reactor.initialize(rootNode.get("feed"));
 
             reactor.summarize();

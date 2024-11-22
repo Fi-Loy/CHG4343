@@ -12,7 +12,7 @@ import java.util.List;
 public class ReactorFactory {
     public static Reactor createReactor(
             @NonNull JsonNode reactorNode,
-            @NonNull Reaction reaction,
+            @NonNull List<Reaction> reactionList,
             @NonNull List<Species> speciesList
     ) {
         String type = reactorNode.get("type").asText();
@@ -22,7 +22,7 @@ public class ReactorFactory {
                 double Wf = reactorNode.get("Wf").asDouble();
                 double alpha = reactorNode.get("alpha").asDouble();
                 String mode = reactorNode.get("mode").asText("adiabatic");
-                return new PackedBedReactor(reaction, speciesList, Wf, alpha, mode);
+                return new PackedBedReactor(reactionList, speciesList, Wf, alpha, mode);
             }
             default -> throw new IllegalArgumentException("Unsupported reactor type: " + type);
         }

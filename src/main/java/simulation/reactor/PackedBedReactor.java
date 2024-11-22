@@ -27,13 +27,13 @@ public class PackedBedReactor extends Reactor {
     @NonNull private final ImmutableMap<String, Integer> speciesIndexMap;
 
     public PackedBedReactor(
-            Reaction reaction,
+            List<Reaction> reactionList,
             List<Species> speciesList,
             double Wf,
             double alpha,
             String mode
     ) {
-        super(reaction, speciesList, Wf, mode);
+        super(reactionList, speciesList, Wf, mode);
         this.alpha = alpha;
         this.initialReactorState = null;
         this.speciesIndexMap = ImmutableMap.copyOf(createSpeciesIndexMap(speciesList));
@@ -77,7 +77,7 @@ public class PackedBedReactor extends Reactor {
         }
 
         Map<String, Double> concentrations = molarFlows.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() / V));
+            .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue() / V));
 
         return new ReactorState(
                 T, P, 1, V,
@@ -116,16 +116,29 @@ public class PackedBedReactor extends Reactor {
         double[] dydW = new double[y.length];
         Arrays.fill(dydW, 0.0);
 
-        double reactionRate = reaction.calculateRate(currentState);
-        String referenceSpecie = reaction.reference();
-        int referenceStoichiometry = reaction.stoichiometry().get(referenceSpecie);
+        double[] reactionRates = new double[reactionList.size()];
+        String[] referenceSpecies = new String[reactionList.size()];
+        int[] referenceStoichiometries = new int[reactionList.size()];
 
-        for (Map.Entry<String, Integer> entry : reaction.stoichiometry().entrySet()) {
-            String species = entry.getKey();
-            int stoichiometry = entry.getValue();
-            int speciesIndex = speciesIndexMap.get(species);
-            dydW[speciesIndex] += reactionRate * stoichiometry / referenceStoichiometry;
+        for (int i = 0; i < reactionList.size(); i++){
+            Reaction reaction = reactionList.get(i);
+            reactionRates[i] = reaction.calculateRate(currentState);
+            referenceSpecies[i] = reaction.reference();
+            referenceStoichiometries[i] = reaction.stoichiometry().get(reaction.reference());
         }
+
+        for(int i = 0; i < reactionList.size(); i++){
+            Reaction reaction = reactionList.get(i);
+            double reactionRate = reactionRates[i];
+            int referenceStoichiometry = referenceStoichiometries[i];
+            for (Map.Entry<String, Integer> entry : reaction.stoichiometry().entrySet()) {
+                String species = entry.getKey();
+                int stoichiometry = entry.getValue();
+                int speciesIndex = speciesIndexMap.get(species);
+                dydW[speciesIndex] += reactionRate * stoichiometry / referenceStoichiometry; //watch out for this, this may be a mistake
+            }
+        }
+        
 
         double initialTemperature = this.initialReactorState.getTemperature();
         double initialTotalFlow = this.initialReactorState.getTotalMolarFlow();
@@ -144,7 +157,11 @@ public class PackedBedReactor extends Reactor {
 
         double dTdW = 0;
         if (mode == ReactorModes.ADIABATIC) {
-            dTdW = (reactionRate * reaction.heat()) / totalCp;
+            for(int i = 0; i < reactionList.size(); i++){
+                Reaction reaction = reactionList.get(i);
+                double reactionRate = reactionRates[i];
+                dTdW = (reactionRate * reaction.heat()) / totalCp;
+            }
         }
         dydW[0] = dTdW;
 
@@ -157,9 +174,9 @@ public class PackedBedReactor extends Reactor {
         double initialPressure = this.initialReactorState.getPressure();
 
         List<String> columnNames = new ArrayList<>(List.of("Catalyst Weight", "T", "sp", "P", "V"));
-        List<String> speciesColumns = speciesList.stream()
-                .flatMap(species -> Stream.of("F_" + species.name(), "C_" + species.name()))
-                .toList();
+        List<String> molarSpeciesColumns = speciesList.stream().flatMap(species -> Stream.of("F_" + species.name())).toList();
+        List<String> concentrationSpeciesColumns = speciesList.stream().flatMap(species -> Stream.of("C_" + species.name())).toList();
+        List<String> speciesColumns = List.copyOf(Stream.concat(molarSpeciesColumns.stream(), concentrationSpeciesColumns.stream()).toList());
         columnNames = List.copyOf(Stream.concat(columnNames.stream(), speciesColumns.stream()).toList());
 
 
@@ -301,7 +318,8 @@ public class PackedBedReactor extends Reactor {
 
         System.out.println(output.toString());
 
-        reaction.summarize();
-
+        for (Reaction reaction : reactionList) {
+            reaction.summarize();
+        }
     }
 }
